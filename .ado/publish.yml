@@ -303,6 +303,8 @@ extends:
                 displayName: 'Publish Artifact: Desktop.${{matrix.buildPlatform}}.${{matrix.buildConfiguration}}'
                 artifactName: Desktop.${{matrix.buildPlatform}}.${{matrix.buildConfiguration}}
                 targetPath: $(Build.StagingDirectory)/NuGet/Desktop/${{matrix.buildPlatform}}/${{matrix.buildConfiguration}}
+              - output: symbols
+                pattern: vnext/target/**/*.pdb
 
         - ${{ each matrix in parameters.universalBuildMatrix }}:
           - job: RnwNativeBuildUniversal${{ matrix.Name }}
@@ -346,22 +348,7 @@ extends:
                   Microsoft.ReactNative.CsWinRT\**
 
             - template: .ado/templates/component-governance.yml@self
-
-            - template: .ado/templates/authenticate-office-react-native-windows-bot.yml@self
-
-            # Make symbols available through http://symweb.
-            - task: PublishSymbols@2
-              displayName: Publish symbols
-              enabled: true
-              inputs:
-                SearchPattern: vnext/target/**/*.pdb
-                SymbolServerType: TeamServices
-                Pat: $(oficeReactnativeWindowsBotAadAuthToken)
-              env:
-                ArtifactServices.Symbol.AccountName: microsoft
-                ArtifactServices.Symbol.UseAAD: true
-                ArtifactServices.Symbol.PAT: ${{ variables.oficeReactnativeWindowsBotAadAuthToken }}
-                
+             
             templateContext:
               sdl:
                 binskim:
@@ -444,24 +431,6 @@ extends:
                 - platform: ARM64EC
                   configuration: Debug
 
-          - template: .ado/templates/authenticate-office-react-native-windows-bot.yml@self
-
-          # Symbol Publishing for Work Item 59264834 - MSRC Compliance
-          - task: PublishSymbols@2
-            displayName: 'Publish Symbols to Microsoft Symbol Server'
-            enabled: true
-            condition: and(succeeded(), in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI'))
-            inputs:
-              SymbolsFolder: '$(System.DefaultWorkingDirectory)\NugetRoot'
-              SearchPattern: '**/*.pdb'
-              SymbolServerType: 'TeamServices'
-              SymbolsProduct: 'ReactNativeWindows'
-              SymbolsVersion: '$(Build.BuildNumber)'
-              SymbolsArtifactName: 'ReactNativeWindows-Symbols'
-              DetailedLog: true
-              TreatNotIndexedAsWarning: false
-              Pat: $(oficeReactnativeWindowsBotAadAuthToken)
-
           templateContext:
             sdl:
               binskim:
@@ -471,3 +440,6 @@ extends:
               displayName: 'Publish final nuget artifacts'
               targetPath: $(System.DefaultWorkingDirectory)\NugetRootFinal
               artifactName: "ReactWindows-final-nuget"
+            - output: symbols
+              pattern: '**/*.pdb'
+              targetPath: $(System.DefaultWorkingDirectory)\NugetRoot
