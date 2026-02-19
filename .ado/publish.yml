@@ -357,7 +357,11 @@ extends:
                 SearchPattern: vnext/target/**/*.pdb
                 SymbolServerType: TeamServices
                 Pat: $(oficeReactnativeWindowsBotAadAuthToken)
-
+              env:
+                ArtifactServices.Symbol.AccountName: microsoft
+                ArtifactServices.Symbol.UseAAD: true
+                ArtifactServices.Symbol.PAT: ${{ variables.oficeReactnativeWindowsBotAadAuthToken }}
+                
             templateContext:
               sdl:
                 binskim:
